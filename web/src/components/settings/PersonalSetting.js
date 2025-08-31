@@ -15,7 +15,8 @@ import {
   onOIDCClicked,
   onLinuxDOOAuthClicked,
   renderModelTag,
-  getModelCategories
+  getModelCategories,
+  onDiscordOAuthClicked
 } from '../../helpers';
 import Turnstile from 'react-turnstile';
 import { UserContext } from '../../context/User';
@@ -54,9 +55,10 @@ import {
   IconKey,
   IconDelete,
   IconChevronDown,
-  IconChevronUp
+  IconChevronUp,
+  IconDisc
 } from '@douyinfe/semi-icons';
-import { SiTelegram, SiWechat, SiLinux } from 'react-icons/si';
+import { SiTelegram, SiWechat, SiLinux, SiDiscord } from 'react-icons/si';
 import { Bell, Shield, Webhook, Globe, Settings, UserPlus, ShieldCheck } from 'lucide-react';
 import TelegramLoginButton from 'react-telegram-login';
 import { useTranslation } from 'react-i18next';
@@ -808,6 +810,44 @@ const PersonalSetting = () => {
                             className="!rounded-lg"
                           >
                             {status.github_oauth ? t('绑定') : t('未启用')}
+                          </Button>
+                        </div>
+                      </Card>
+
+                      {/* Discord绑定 */}
+                      <Card
+                        className="!rounded-xl transition-shadow"
+                        bodyStyle={{ padding: '16px' }}
+                        shadows='hover'
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center flex-1">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mr-3">
+                              <SiDiscord size={20} className="text-slate-600 dark:text-slate-300" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">{t('Discord')}</div>
+                              <div className="text-sm text-gray-500 truncate">
+                                {userState.user && userState.user.discord_id !== ''
+                                  ? userState.user.discord_id
+                                  : t('未绑定')}
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            type="primary"
+                            theme="outline"
+                            size="small"
+                            onClick={() => onDiscordOAuthClicked(
+                              status.discord_client_id,
+                            )}
+                            disabled={
+                              (userState.user && userState.user.discord_id !== '') ||
+                              !status.discord_oauth
+                            }
+                            className="!rounded-lg"
+                          >
+                            {status.discord_oauth ? t('绑定') : t('未启用')}
                           </Button>
                         </div>
                       </Card>

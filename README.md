@@ -82,7 +82,7 @@ New API提供了丰富的功能，详细特性请参考[特性说明](https://do
 7. ⚖️ 支持渠道加权随机
 8. 📈 数据看板（控制台）
 9. 🔒 令牌分组、模型限制
-10. 🤖 支持更多授权登陆方式（LinuxDO,Telegram、OIDC）
+10. 🤖 支持更多授权登陆方式（LinuxDO、Telegram、OIDC、Discord）
 11. 🔄 支持Rerank模型（Cohere和Jina），[接口文档](https://docs.newapi.pro/api/jinaai-rerank)
 12. ⚡ 支持OpenAI Realtime API（包括Azure渠道），[接口文档](https://docs.newapi.pro/api/openai-realtime)
 13. ⚡ 支持Claude Messages 格式，[接口文档](https://docs.newapi.pro/api/anthropic-chat)
