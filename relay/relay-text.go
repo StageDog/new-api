@@ -127,6 +127,11 @@ func TextHelper(c *gin.Context) (newAPIError *types.NewAPIError) {
 		c.Set("prompt_tokens", promptTokens)
 	}
 
+	err = checkPromptTokensInBotChannel(promptTokens, relayInfo)
+	if err != nil {
+		return types.NewError(err, types.ErrorCodePromptTokensTooLarge)
+	}
+
 	priceData, err := helper.ModelPriceHelper(c, relayInfo, promptTokens, int(math.Max(float64(textRequest.MaxTokens), float64(textRequest.MaxCompletionTokens))))
 	if err != nil {
 		return types.NewError(err, types.ErrorCodeModelPriceError)
@@ -259,6 +264,13 @@ func getPromptTokens(textRequest *dto.GeneralOpenAIRequest, info *relaycommon.Re
 	}
 	info.PromptTokens = promptTokens
 	return promptTokens, err
+}
+
+func checkPromptTokensInBotChannel(promptTokens int, info *relaycommon.RelayInfo) error {
+	if info.ChannelTokenLimit > 0 && promptTokens > info.ChannelTokenLimit {
+		return fmt.Errorf("prompt tokens (%d) is greater than channel token limit (%d)", promptTokens, info.ChannelTokenLimit)
+	}
+	return nil
 }
 
 func checkRequestSensitive(textRequest *dto.GeneralOpenAIRequest, info *relaycommon.RelayInfo) ([]string, error) {
