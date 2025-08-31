@@ -52,6 +52,7 @@ const EditUser = (props) => {
     display_name: '',
     password: '',
     github_id: '',
+    discord_id: '',
     oidc_id: '',
     wechat_id: '',
     telegram_id: '',
@@ -288,7 +289,7 @@ const EditUser = (props) => {
                   </div>
 
                   <Row gutter={12}>
-                    {['github_id', 'oidc_id', 'wechat_id', 'email', 'telegram_id'].map((field) => (
+                    {['github_id', 'discord_id', 'oidc_id', 'wechat_id', 'email', 'telegram_id'].map((field) => (
                       <Col span={24} key={field}>
                         <Form.Input
                           field={field}

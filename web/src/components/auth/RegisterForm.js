@@ -33,6 +33,7 @@ import WeChatIcon from '../common/logo/WeChatIcon.js';
 import TelegramLoginButton from 'react-telegram-login/src';
 import { UserContext } from '../../context/User/index.js';
 import { useTranslation } from 'react-i18next';
+import { SiDiscord } from 'react-icons/si';
 
 const RegisterForm = () => {
   let navigate = useNavigate();
@@ -309,6 +310,20 @@ const RegisterForm = () => {
                   </Button>
                 )}
 
+                {status.discord_oauth && (
+                  <Button
+                    theme='outline'
+                    className="w-full h-12 flex items-center justify-center !rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                    type="tertiary"
+                    icon={<SiDiscord size="large" />}
+                    size="large"
+                    onClick={handleDiscordClick}
+                    loading={discordLoading}
+                  >
+                    <span className="ml-3">{t('使用 Discord 继续')}</span>
+                  </Button>
+                )}
+
                 {status.oidc_enabled && (
                   <Button
                     theme='outline'
@@ -468,7 +483,7 @@ const RegisterForm = () => {
                 </div>
               </Form>
 
-              {(status.github_oauth || status.oidc_enabled || status.wechat_login || status.linuxdo_oauth || status.telegram_oauth) && (
+              {(status.github_oauth || status.discord_oauth || status.oidc_enabled || status.wechat_login || status.linuxdo_oauth || status.telegram_oauth) && (
                 <>
                   <Divider margin='12px' align='center'>
                     {t('或')}
@@ -541,7 +556,7 @@ const RegisterForm = () => {
       <div className="blur-ball blur-ball-indigo" style={{ top: '-80px', right: '-80px', transform: 'none' }} />
       <div className="blur-ball blur-ball-teal" style={{ top: '50%', left: '-120px' }} />
       <div className="w-full max-w-sm mt-[64px]">
-        {showEmailRegister || !(status.github_oauth || status.oidc_enabled || status.wechat_login || status.linuxdo_oauth || status.telegram_oauth)
+        {showEmailRegister || !(status.github_oauth || status.discord_oauth || status.oidc_enabled || status.wechat_login || status.linuxdo_oauth || status.telegram_oauth)
           ? renderEmailRegisterForm()
           : renderOAuthOptions()}
         {renderWeChatLoginModal()}

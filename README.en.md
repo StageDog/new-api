@@ -82,7 +82,7 @@ New API offers a wide range of features, please refer to [Features Introduction]
 7. ⚖️ Support for weighted random channel selection
 8. 📈 Data dashboard (console)
 9. 🔒 Token grouping and model restrictions
-10. 🤖 Support for more authorization login methods (LinuxDO, Telegram, OIDC)
+10. 🤖 Support for more authorization login methods (LinuxDO, Telegram, OIDC, Discord)
 11. 🔄 Support for Rerank models (Cohere and Jina), [API Documentation](https://docs.newapi.pro/api/jinaai-rerank)
 12. ⚡ Support for OpenAI Realtime API (including Azure channels), [API Documentation](https://docs.newapi.pro/api/openai-realtime)
 13. ⚡ Support for Claude Messages format, [API Documentation](https://docs.newapi.pro/api/anthropic-chat)
