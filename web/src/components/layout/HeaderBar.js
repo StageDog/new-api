@@ -98,19 +98,9 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
 
   const mainNavLinks = [
     {
-      text: t('首页'),
-      itemKey: 'home',
-      to: '/',
-    },
-    {
       text: t('控制台'),
       itemKey: 'console',
       to: '/console',
-    },
-    {
-      text: t('定价'),
-      itemKey: 'pricing',
-      to: '/pricing',
     },
     ...(docsLink
       ? [
@@ -122,11 +112,6 @@ const HeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
         },
       ]
       : []),
-    {
-      text: t('关于'),
-      itemKey: 'about',
-      to: '/about',
-    },
   ];
 
   async function logout() {

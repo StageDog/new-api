@@ -18,19 +18,16 @@ import {
 
 const routerMap = {
   home: '/',
+  playground: '/console/playground',
+  detail: '/console',
   channel: '/console/channel',
   token: '/console/token',
-  redemption: '/console/redemption',
-  topup: '/console/topup',
   user: '/console/user',
   log: '/console/log',
   midjourney: '/console/midjourney',
   setting: '/console/setting',
   about: '/about',
-  detail: '/console',
-  pricing: '/pricing',
   task: '/console/task',
-  playground: '/console/playground',
   personal: '/console/personal',
 };
 
@@ -44,6 +41,22 @@ const SiderBar = ({ onNavigate = () => { } }) => {
   const location = useLocation();
   const [routerMapState, setRouterMapState] = useState(routerMap);
 
+  const chatMenuItems = useMemo(
+    () => [
+      {
+        text: t('操练场'),
+        itemKey: 'playground',
+        to: '/playground',
+      },
+      {
+        text: t('聊天'),
+        itemKey: 'chat',
+        items: chatItems,
+      },
+    ],
+    [chatItems, t],
+  );
+
   const workspaceItems = useMemo(
     () => [
       {
@@ -54,11 +67,6 @@ const SiderBar = ({ onNavigate = () => { } }) => {
           localStorage.getItem('enable_data_export') === 'true'
             ? ''
             : 'tableHiddle',
-      },
-      {
-        text: t('API令牌'),
-        itemKey: 'token',
-        to: '/token',
       },
       {
         text: t('使用日志'),
@@ -93,9 +101,9 @@ const SiderBar = ({ onNavigate = () => { } }) => {
   const financeItems = useMemo(
     () => [
       {
-        text: t('钱包'),
-        itemKey: 'topup',
-        to: '/topup',
+        text: t('API令牌'),
+        itemKey: 'token',
+        to: '/token',
       },
       {
         text: t('个人设置'),
@@ -109,15 +117,9 @@ const SiderBar = ({ onNavigate = () => { } }) => {
   const adminItems = useMemo(
     () => [
       {
-        text: t('渠道'),
+        text: t('渠道管理'),
         itemKey: 'channel',
         to: '/channel',
-        className: isAdmin() ? '' : 'tableHiddle',
-      },
-      {
-        text: t('兑换码'),
-        itemKey: 'redemption',
-        to: '/redemption',
         className: isAdmin() ? '' : 'tableHiddle',
       },
       {
@@ -130,26 +132,10 @@ const SiderBar = ({ onNavigate = () => { } }) => {
         text: t('系统设置'),
         itemKey: 'setting',
         to: '/setting',
-        className: isRoot() ? '' : 'tableHiddle',
+        className: isAdmin() ? '' : 'tableHiddle',
       },
     ],
-    [isAdmin(), isRoot(), t],
-  );
-
-  const chatMenuItems = useMemo(
-    () => [
-      {
-        text: t('操练场'),
-        itemKey: 'playground',
-        to: '/playground',
-      },
-      {
-        text: t('聊天'),
-        itemKey: 'chat',
-        items: chatItems,
-      },
-    ],
-    [chatItems, t],
+    [isAdmin(), t],
   );
 
   // 更新路由映射，添加聊天路由
@@ -383,6 +369,15 @@ const SiderBar = ({ onNavigate = () => { } }) => {
           {workspaceItems.map((item) => renderNavItem(item))}
         </div>
 
+        {/* 个人中心区域 */}
+        <Divider className="sidebar-divider" />
+        <div>
+          {!collapsed && (
+            <div className="sidebar-group-label">{t('个人中心')}</div>
+          )}
+          {financeItems.map((item) => renderNavItem(item))}
+        </div>
+
         {/* 管理员区域 - 只在管理员时显示 */}
         {isAdmin() && (
           <>
@@ -395,15 +390,6 @@ const SiderBar = ({ onNavigate = () => { } }) => {
             </div>
           </>
         )}
-
-        {/* 个人中心区域 */}
-        <Divider className="sidebar-divider" />
-        <div>
-          {!collapsed && (
-            <div className="sidebar-group-label">{t('个人中心')}</div>
-          )}
-          {financeItems.map((item) => renderNavItem(item))}
-        </div>
       </Nav>
 
       {/* 底部折叠按钮 */}

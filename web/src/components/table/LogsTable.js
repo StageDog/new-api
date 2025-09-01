@@ -303,7 +303,7 @@ const LogsTable = () => {
       [COLUMN_KEYS.COMPLETION]: true,
       [COLUMN_KEYS.COST]: true,
       [COLUMN_KEYS.RETRY]: isAdminUser,
-      [COLUMN_KEYS.IP]: true,
+      [COLUMN_KEYS.IP]: isAdminUser,
       [COLUMN_KEYS.DETAILS]: true,
     };
   };
@@ -558,15 +558,9 @@ const LogsTable = () => {
     },
     {
       key: COLUMN_KEYS.IP,
-      title: (
-        <div className="flex items-center gap-1">
-          {t('IP')}
-          <Tooltip content={t('只有当用户设置开启IP记录时，才会进行请求和错误类型日志的IP记录')}>
-            <IconHelpCircle className="text-gray-400 cursor-help" />
-          </Tooltip>
-        </div>
-      ),
+      title: t('IP'),
       dataIndex: 'ip',
+      className: isAdmin() ? 'tableShow' : 'tableHiddle',
       render: (text, record, index) => {
         return (record.type === 2 || record.type === 5) && text ? (
           <Tooltip content={text}>

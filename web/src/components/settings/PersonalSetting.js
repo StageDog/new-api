@@ -105,7 +105,7 @@ const PersonalSetting = () => {
     webhookSecret: '',
     notificationEmail: '',
     acceptUnsetModelRatioModel: false,
-    recordIpLog: false,
+    recordIpLog: true,
   });
   const [modelsLoading, setModelsLoading] = useState(true);
   const [showWebhookDocs, setShowWebhookDocs] = useState(true);
@@ -150,7 +150,7 @@ const PersonalSetting = () => {
         notificationEmail: settings.notification_email || '',
         acceptUnsetModelRatioModel:
           settings.accept_unset_model_ratio_model || false,
-        recordIpLog: settings.record_ip_log || false,
+        recordIpLog: true,
       });
     }
   }, [userState?.user?.setting]);
@@ -366,7 +366,7 @@ const PersonalSetting = () => {
         notification_email: notificationSettings.notificationEmail,
         accept_unset_model_ratio_model:
           notificationSettings.acceptUnsetModelRatioModel,
-        record_ip_log: notificationSettings.recordIpLog,
+        record_ip_log: true,
       });
 
       if (res.data.success) {
@@ -1298,43 +1298,6 @@ const PersonalSetting = () => {
                                       className="ml-4"
                                     />
                                   </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </TabPane>
-
-                      <TabPane
-                        tab={t('IP记录')}
-                        itemKey='ip'
-                      >
-                        <div className="py-4">
-                          <div className="bg-white rounded-xl">
-                            <div className="flex items-start">
-                              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mt-1">
-                                <ShieldCheck size={20} className="text-slate-600" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <Typography.Text strong className="block mb-2">
-                                      {t('记录请求与错误日志 IP')}
-                                    </Typography.Text>
-                                    <div className="text-gray-500 text-sm">
-                                      {t('开启后，仅“消费”和“错误”日志将记录您的客户端 IP 地址')}
-                                    </div>
-                                  </div>
-                                  <Checkbox
-                                    checked={notificationSettings.recordIpLog}
-                                    onChange={(e) =>
-                                      handleNotificationSettingChange(
-                                        'recordIpLog',
-                                        e.target.checked,
-                                      )
-                                    }
-                                    className="ml-4"
-                                  />
                                 </div>
                               </div>
                             </div>

@@ -110,7 +110,7 @@ const RegisterForm = () => {
         localStorage.setItem('user', JSON.stringify(data));
         setUserData(data);
         updateAPI();
-        navigate('/');
+        navigate('/console');
         showSuccess('登录成功！');
         setShowWeChatLoginModal(false);
       } else {
@@ -258,7 +258,7 @@ const RegisterForm = () => {
         showSuccess('登录成功！');
         setUserData(data);
         updateAPI();
-        navigate('/');
+        navigate('/console');
       } else {
         showError(message);
       }

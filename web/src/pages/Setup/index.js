@@ -53,7 +53,7 @@ const Setup = () => {
 
         // If setup is already completed, redirect to home
         if (data.status) {
-          window.location.href = '/';
+          window.location.href = '/console';
         }
       } else {
         showError(t('获取初始化状态失败'));
