@@ -45,6 +45,7 @@ type Channel struct {
 	Setting           *string `json:"setting" gorm:"type:text"` // 渠道额外设置
 	ParamOverride     *string `json:"param_override" gorm:"type:text"`
 	TokenLimit        *int    `json:"token_limit" gorm:"default:0"`
+	RateLimit         *int    `json:"rate_limit" gorm:"default:0"`
 	// add after v0.8.5
 	ChannelInfo ChannelInfo `json:"channel_info" gorm:"type:json"`
 }
@@ -405,6 +406,12 @@ func (channel *Channel) GetTokenLimit() int {
 	return *channel.TokenLimit
 }
 
+func (channel *Channel) GetRateLimit() int {
+	if channel.RateLimit == nil || *channel.RateLimit <= 0 {
+		return 0
+	}
+	return *channel.RateLimit
+}
 
 func (channel *Channel) Insert() error {
 	var err error

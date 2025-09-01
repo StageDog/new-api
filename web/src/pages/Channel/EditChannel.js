@@ -103,6 +103,7 @@ const EditChannel = (props) => {
     priority: 0,
     weight: 0,
     token_limit: 0,
+    rate_limit: 0,
     tag: '',
     multi_key_mode: 'random',
   };
@@ -1379,6 +1380,16 @@ const EditChannel = (props) => {
                         placeholder={t('最大上下文')}
                         min={0}
                         onNumberChange={(value) => handleInputChange('token_limit', value)}
+                        style={{ width: '100%' }}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Form.InputNumber
+                        field='rate_limit'
+                        label={t('每分钟最大请求数')}
+                        placeholder={t('每分钟最大请求数')}
+                        min={0}
+                        onNumberChange={(value) => handleInputChange('rate_limit', value)}
                         style={{ width: '100%' }}
                       />
                     </Col>

@@ -32,6 +32,7 @@ const (
 	ContextKeyChannelMultiKeyIndex     ContextKey = "channel_multi_key_index"
 	ContextKeyChannelKey               ContextKey = "channel_key"
 	ContextKeyChannelTokenLimit        ContextKey = "channel_token_limit"
+	ContextKeyChannelRateLimit         ContextKey = "channel_rate_limit"
 
 	/* user related keys */
 	ContextKeyUserId      ContextKey = "id"

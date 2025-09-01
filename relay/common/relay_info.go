@@ -63,6 +63,7 @@ type RelayInfo struct {
 	ChannelType       int
 	ChannelId         int
 	ChannelTokenLimit int
+	ChannelRateLimit  int
 	TokenId           int
 	TokenKey          string
 	UserId            int
@@ -217,6 +218,7 @@ func GenRelayInfo(c *gin.Context) *RelayInfo {
 	channelType := common.GetContextKeyInt(c, constant.ContextKeyChannelType)
 	channelId := common.GetContextKeyInt(c, constant.ContextKeyChannelId)
 	channelTokenLimit := common.GetContextKeyInt(c, constant.ContextKeyChannelTokenLimit)
+	channelRateLimit := common.GetContextKeyInt(c, constant.ContextKeyChannelRateLimit)
 	paramOverride := common.GetContextKeyStringMap(c, constant.ContextKeyChannelParamOverride)
 
 	tokenId := common.GetContextKeyInt(c, constant.ContextKeyTokenId)
@@ -238,6 +240,7 @@ func GenRelayInfo(c *gin.Context) *RelayInfo {
 		ChannelType:       channelType,
 		ChannelId:         channelId,
 		ChannelTokenLimit: channelTokenLimit,
+		ChannelRateLimit:  channelRateLimit,
 		TokenId:           tokenId,
 		TokenKey:          tokenKey,
 		UserId:            userId,

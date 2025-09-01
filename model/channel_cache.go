@@ -7,11 +7,13 @@ import (
 	"one-api/common"
 	"one-api/setting"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 var group2model2channels map[string]map[string][]int // enabled channel
@@ -130,26 +132,30 @@ func getRandomSatisfiedChannel(group string, model string, retry int) (*Channel,
 
 	channelSyncLock.RLock()
 	defer channelSyncLock.RUnlock()
-	channels := group2model2channels[group][model]
+	channelIds := group2model2channels[group][model]
 
-	if len(channels) == 0 {
-		return nil, errors.New("channel not found")
-	}
-
-	if len(channels) == 1 {
-		if channel, ok := channelsIDM[channels[0]]; ok {
-			return channel, nil
-		}
-		return nil, fmt.Errorf("数据库一致性错误，渠道# %d 不存在，请联系管理员修复", channels[0])
-	}
-
-	uniquePriorities := make(map[int]bool)
-	for _, channelId := range channels {
+	validChannels := make([]*Channel, 0)
+	for _, channelId := range channelIds {
 		if channel, ok := channelsIDM[channelId]; ok {
-			uniquePriorities[int(channel.GetPriority())] = true
+			if !isRedisLimited(*channel, channelId) {
+				validChannels = append(validChannels, channel)
+			}
 		} else {
 			return nil, fmt.Errorf("数据库一致性错误，渠道# %d 不存在，请联系管理员修复", channelId)
 		}
+	}
+
+	if len(validChannels) == 0 {
+		return nil, errors.New("channel not found")
+	}
+
+	if len(validChannels) == 1 {
+		return validChannels[0], nil
+	}
+
+	uniquePriorities := make(map[int]bool)
+	for _, channel := range validChannels {
+		uniquePriorities[int(channel.GetPriority())] = true
 	}
 	var sortedUniquePriorities []int
 	for priority := range uniquePriorities {
@@ -164,13 +170,9 @@ func getRandomSatisfiedChannel(group string, model string, retry int) (*Channel,
 
 	// get the priority for the given retry number
 	var targetChannels []*Channel
-	for _, channelId := range channels {
-		if channel, ok := channelsIDM[channelId]; ok {
-			if channel.GetPriority() == targetPriority {
-				targetChannels = append(targetChannels, channel)
-			}
-		} else {
-			return nil, fmt.Errorf("数据库一致性错误，渠道# %d 不存在，请联系管理员修复", channelId)
+	for _, channel := range validChannels {
+		if channel.GetPriority() == targetPriority {
+			targetChannels = append(targetChannels, channel)
 		}
 	}
 
@@ -193,6 +195,53 @@ func getRandomSatisfiedChannel(group string, model string, retry int) (*Channel,
 	}
 	// return null if no channel is not found
 	return nil, errors.New("channel not found")
+}
+
+func isRedisLimited(channel Channel, channelId int) bool {
+	if channel.RateLimit != nil && *channel.RateLimit > 0 {
+		if !checkRedisLimit(channel, channelId) {
+			return true
+		}
+	}
+	return false
+}
+
+func checkRedisLimit(channel Channel, channelId int) bool {
+	key := fmt.Sprintf("rate_limit:%d", channelId)
+
+	countStr, err := common.RedisGet(key)
+	if err == redis.Nil {
+		// Key doesn't exist, set it with expiration
+		err = common.RedisSet(key, "1", time.Minute)
+		if err != nil {
+			common.SysLog(fmt.Sprintf("Error setting rate limit: %v", err))
+			return false
+		}
+		return true
+	} else if err != nil {
+		common.SysLog(fmt.Sprintf("Error checking rate limit: %v", err))
+		return false
+	}
+
+	count, err := strconv.ParseInt(countStr, 10, 64)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("Error parsing rate limit count: %v", err))
+		return false
+	}
+
+	if count > int64(*channel.RateLimit) {
+		return false
+	}
+
+	// 增加计数
+	newCount := strconv.FormatInt(count+1, 10)
+	err = common.RedisSet(key, newCount, time.Minute)
+	if err != nil {
+		common.SysLog(fmt.Sprintf("Error incrementing rate limit: %v", err))
+		return false
+	}
+
+	return true
 }
 
 func CacheGetChannel(id int) (*Channel, error) {
