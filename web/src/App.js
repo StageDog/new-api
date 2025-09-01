@@ -28,7 +28,7 @@ import Setup from './pages/Setup/index.js';
 import SetupCheck from './components/layout/SetupCheck.js';
 
 const Home = lazy(() => import('./pages/Home'));
-const Detail = lazy(() => import('./pages/Detail'));
+const Detail = lazy(() => import('./pages/Detail2'));
 const About = lazy(() => import('./pages/About'));
 
 function App() {
