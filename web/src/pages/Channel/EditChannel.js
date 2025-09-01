@@ -102,6 +102,7 @@ const EditChannel = (props) => {
     groups: ['default'],
     priority: 0,
     weight: 0,
+    rate_limit: 0,
     tag: '',
     multi_key_mode: 'random',
   };
@@ -1368,6 +1369,16 @@ const EditChannel = (props) => {
                         placeholder={t('渠道权重')}
                         min={0}
                         onNumberChange={(value) => handleInputChange('weight', value)}
+                        style={{ width: '100%' }}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Form.InputNumber
+                        field='rate_limit'
+                        label={t('每分钟最大请求数')}
+                        placeholder={t('每分钟最大请求数')}
+                        min={0}
+                        onNumberChange={(value) => handleInputChange('rate_limit', value)}
                         style={{ width: '100%' }}
                       />
                     </Col>

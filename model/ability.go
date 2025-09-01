@@ -6,6 +6,7 @@ import (
 	"one-api/common"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/samber/lo"
 	"gorm.io/gorm"
@@ -102,6 +103,81 @@ func getChannelQuery(group string, model string, retry int) (*gorm.DB, error) {
 	return channelQuery, nil
 }
 
+var channelRateLimitStatus sync.Map // 存储每个 Channel 的频率限制状态
+var rateLimitMutex sync.Mutex
+
+type ChannelRateLimit struct {
+	Count     int64     // 使用次数
+	ResetTime time.Time // 上次重置时间
+}
+
+type ChannelModelKey struct {
+	ChannelID int
+}
+
+func isRateLimited(channel Channel, channelId int) bool {
+	if (channel.RateLimit != nil && *channel.RateLimit > 0) {
+		if _, ok := checkRateLimit(&channel, channelId); !ok {
+			return true
+		}
+		updateRateLimitStatus(channelId)
+	}
+	return false
+}
+
+
+func checkRateLimit(channel *Channel, channelId int) (*ChannelRateLimit, bool) {
+	now := time.Now()
+	key := ChannelModelKey{ChannelID: channelId}
+
+	rateLimitMutex.Lock()
+	defer rateLimitMutex.Unlock()
+
+	value, exists := channelRateLimitStatus.Load(key)
+	if !exists {
+		value = &ChannelRateLimit{
+			Count:     1,
+			ResetTime: now.Add(time.Minute),
+		}
+		channelRateLimitStatus.Store(key, value)
+		return value.(*ChannelRateLimit), true
+	}
+	rateLimit := value.(*ChannelRateLimit)
+	if now.After(rateLimit.ResetTime) {
+		rateLimit.Count = 1
+		rateLimit.ResetTime = now.Add(time.Minute)
+		return rateLimit, true
+	} else if int64(*channel.RateLimit) > rateLimit.Count {
+		rateLimit.Count++
+		return rateLimit, true
+	}
+
+	return rateLimit, false
+}
+
+func updateRateLimitStatus(channelId int) {
+	now := time.Now()
+	key := ChannelModelKey{ChannelID: channelId}
+
+	rateLimitMutex.Lock()
+	defer rateLimitMutex.Unlock()
+
+	val, _ := channelRateLimitStatus.Load(key)
+	if val == nil {
+		return
+	}
+
+	rl := val.(*ChannelRateLimit)
+	if now.After(rl.ResetTime) {
+		rl.Count = 1
+		rl.ResetTime = now.Add(time.Minute)
+	} else {
+		rl.Count++
+	}
+
+	channelRateLimitStatus.Store(key, rl)
+}
+
 func GetRandomSatisfiedChannel(group string, model string, retry int) (*Channel, error) {
 	var abilities []Ability
 
@@ -118,28 +194,62 @@ func GetRandomSatisfiedChannel(group string, model string, retry int) (*Channel,
 	if err != nil {
 		return nil, err
 	}
-	channel := Channel{}
-	if len(abilities) > 0 {
-		// Randomly choose one
-		weightSum := uint(0)
-		for _, ability_ := range abilities {
-			weightSum += ability_.Weight + 10
-		}
-		// Randomly choose one
-		weight := common.GetRandomInt(int(weightSum))
-		for _, ability_ := range abilities {
-			weight -= int(ability_.Weight) + 10
-			//log.Printf("weight: %d, ability weight: %d", weight, *ability_.Weight)
-			if weight <= 0 {
-				channel.Id = ability_.ChannelId
-				break
-			}
-		}
-	} else {
-		return nil, errors.New("channel not found")
+	if len(abilities) <= 0 {
+		return nil, errors.New("channel not found");
 	}
-	err = DB.First(&channel, "id = ?", channel.Id).Error
-	return &channel, err
+
+	channel := Channel{}
+	for len(abilities) > 0 {
+		selectedIndex, err := getRandomWeightedIndex(abilities)
+		if err != nil {
+			return nil, err
+		}
+
+		selectedAbility := abilities[selectedIndex]
+		channelPtr, err := GetChannelById(selectedAbility.ChannelId, true)
+		if err != nil {
+			if err.Error() != "channel not found" {
+				return nil, err
+			}
+			abilities = removeAbility(abilities, selectedIndex)
+			continue
+		}
+
+		channel = *channelPtr
+		if isRateLimited(channel, channel.Id) {
+			abilities = removeAbility(abilities, selectedIndex)
+			continue
+		}
+
+		return channelPtr, nil
+	}
+
+	return nil, errors.New("channel not found")
+}
+
+func getRandomWeightedIndex(abilities []Ability) (int, error) {
+	weightSum := uint(0)
+	for _, ability := range abilities {
+		weightSum += ability.Weight
+	}
+
+	if weightSum == 0 {
+		return common.GetRandomInt(len(abilities)), nil
+	}
+
+	randomWeight := common.GetRandomInt(int(weightSum))
+	for i, ability := range abilities {
+		randomWeight -= int(ability.Weight)
+		if randomWeight <= 0 {
+			return i, nil
+		}
+	}
+
+	return -1, errors.New("unable to select a random weighted index")
+}
+
+func removeAbility(abilities []Ability, index int) []Ability {
+	return append(abilities[:index], abilities[index+1:]...)
 }
 
 func (channel *Channel) AddAbilities() error {
