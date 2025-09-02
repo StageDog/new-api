@@ -185,6 +185,7 @@ const Detail = (props) => {
     start_timestamp: timestamp2string(new Date().setHours(0, 0, 0, 0) / 1000),
     end_timestamp: timestamp2string(now.getTime() / 1000 + 3600),
     channel: '',
+    show_upstream_model_name: true,
     data_export_default_time: '',
   });
 
@@ -238,7 +239,7 @@ const Detail = (props) => {
   const [activeUptimeTab, setActiveUptimeTab] = useState('');
 
   // ========== Props Destructuring ==========
-  const { username, model_name, start_timestamp, end_timestamp, channel } =
+  const { username, model_name, start_timestamp, end_timestamp, channel, show_upstream_model_name } =
     inputs;
 
   // ========== Chart Specs State ==========
@@ -869,7 +870,7 @@ const Detail = (props) => {
       };
 
       data.forEach((item) => {
-        result.uniqueModels.add(item.model_name);
+        result.uniqueModels.add((show_upstream_model_name && item.upstream_model_name !== '') ? item.upstream_model_name : item.model_name);
         result.totalInputTokens += item.prompt_tokens;
         result.totalOutputTokens += item.completion_tokens;
         result.totalQuota += item.quota;
@@ -982,7 +983,7 @@ const Detail = (props) => {
           item.created_at,
           dataExportDefaultTime,
         );
-        const modelKey = item.model_name;
+        const modelKey = (show_upstream_model_name && item.upstream_model_name !== '') ? item.upstream_model_name : item.model_name;
         const key = `${timeKey}-${modelKey}`;
 
         if (!aggregatedData.has(key)) {
@@ -1412,6 +1413,16 @@ const Detail = (props) => {
               placeholder: t('可选值'),
               name: 'username',
               onChange: (value) => handleInputChange(value, 'username'),
+            })}
+
+          {isAdminUser &&
+            createFormField(Form.Checkbox, {
+              field: 'show_upstream_model_name',
+              label: t('显示上游模型名称'),
+              initValue: show_upstream_model_name,
+              value: show_upstream_model_name,
+              name: 'show_upstream_model_name',
+              onChange: (value) => handleInputChange(value, 'show_upstream_model_name'),
             })}
         </Form>
       </Modal>
