@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
+import _ from 'lodash';
 import React from 'react';
 import { Progress, Divider, Empty } from '@douyinfe/semi-ui';
 import {
@@ -46,20 +47,6 @@ export const getTimeInterval = (timeType, isSeconds = false) => {
   const intervals =
     DEFAULT_TIME_INTERVALS[timeType] || DEFAULT_TIME_INTERVALS.hour;
   return isSeconds ? intervals.seconds : intervals.minutes;
-};
-
-export const getInitialTimestamp = () => {
-  const defaultTime = getDefaultTime();
-  const now = new Date().getTime() / 1000;
-
-  switch (defaultTime) {
-    case 'hour':
-      return timestamp2string(now - 86400);
-    case 'week':
-      return timestamp2string(now - 86400 * 30);
-    default:
-      return timestamp2string(now - 86400 * 7);
-  }
 };
 
 // ========== 数据处理工具函数 ==========
@@ -252,20 +239,24 @@ export const processRawData = (
   const result = {
     totalQuota: 0,
     totalTimes: 0,
-    totalTokens: 0,
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
     uniqueModels: new Set(),
     timePoints: [],
     timeQuotaMap: new Map(),
-    timeTokensMap: new Map(),
+    timeInputTokensMap: new Map(),
+    timeOutputTokensMap: new Map(),
     timeCountMap: new Map(),
+    userConsumptionMap: new Map(),
   };
 
   // 检查数据是否跨年
   const showYear = isDataCrossYear(data.map((item) => item.created_at));
 
   data.forEach((item) => {
-    result.uniqueModels.add(item.model_name);
-    result.totalTokens += item.token_used;
+    result.uniqueModels.add(item.upstream_model_name !== '' ? item.upstream_model_name : item.model_name);
+    result.totalInputTokens += item.prompt_tokens;
+    result.totalOutputTokens += item.completion_tokens;
     result.totalQuota += item.quota;
     result.totalTimes += item.count;
 
@@ -281,12 +272,15 @@ export const processRawData = (
     initializeMaps(
       timeKey,
       result.timeQuotaMap,
-      result.timeTokensMap,
+      result.timeInputTokensMap,
+      result.timeOutputTokensMap,
       result.timeCountMap,
     );
     updateMapValue(result.timeQuotaMap, timeKey, item.quota);
-    updateMapValue(result.timeTokensMap, timeKey, item.token_used);
+    updateMapValue(result.timeInputTokensMap, timeKey, item.prompt_tokens);
+    updateMapValue(result.timeOutputTokensMap, timeKey, item.completion_tokens);
     updateMapValue(result.timeCountMap, timeKey, item.count);
+    updateMapValue(result.userConsumptionMap, item.username, item.prompt_tokens + item.completion_tokens);
   });
 
   result.timePoints.sort();
@@ -296,12 +290,14 @@ export const processRawData = (
 export const calculateTrendData = (
   timePoints,
   timeQuotaMap,
-  timeTokensMap,
+  timeInputTokensMap,
+  timeOutputTokensMap,
   timeCountMap,
   dataExportDefaultTime,
 ) => {
   const quotaTrend = timePoints.map((time) => timeQuotaMap.get(time) || 0);
-  const tokensTrend = timePoints.map((time) => timeTokensMap.get(time) || 0);
+  const inputTokensTrend = timePoints.map((time) => timeInputTokensMap.get(time) || 0);
+  const outputTokensTrend = timePoints.map((time) => timeOutputTokensMap.get(time) || 0);
   const countTrend = timePoints.map((time) => timeCountMap.get(time) || 0);
 
   const rpmTrend = [];
@@ -312,7 +308,7 @@ export const calculateTrendData = (
 
     for (let i = 0; i < timePoints.length; i++) {
       rpmTrend.push(timeCountMap.get(timePoints[i]) / interval);
-      tpmTrend.push(timeTokensMap.get(timePoints[i]) / interval);
+      tpmTrend.push((timeInputTokensMap.get(timePoints[i]) + timeOutputTokensMap.get(timePoints[i])) / interval);
     }
   }
 
@@ -322,7 +318,8 @@ export const calculateTrendData = (
     requestCount: [],
     times: countTrend,
     consumeQuota: quotaTrend,
-    tokens: tokensTrend,
+    inputTokens: inputTokensTrend,
+    outputTokens: outputTokensTrend,
     rpm: rpmTrend,
     tpm: tpmTrend,
   };
@@ -340,7 +337,26 @@ export const aggregateDataByTimeAndModel = (data, dataExportDefaultTime) => {
       dataExportDefaultTime,
       showYear,
     );
-    const modelKey = item.model_name;
+    const trimModel = (model_name) => {
+      model_name = model_name
+        .replace(/^[^\/]+\//, '')
+        .replace(/^\[[^\]]+\]/, '')
+        .replace(/-(?:202\d+|thinking|low|high|preview|r)$/, '')
+        .replace(/:.+$/, '');
+      
+      const sonnet = model_name.match(/claude-(\d+)(?:\.|-)(\d+)-sonnet/);
+      if (sonnet) {
+        return `claude-sonnet-${sonnet[1]}-${sonnet[2]}`;
+      }
+
+      const glm = model_name.match(/glm(\d+)/);
+      if (glm) {
+        return `glm-${glm[1]}`;
+      }
+
+      return model_name;
+    };
+    const modelKey = trimModel(item.upstream_model_name !== '' ? item.upstream_model_name : item.model_name);
     const key = `${timeKey}-${modelKey}`;
 
     if (!aggregatedData.has(key)) {
