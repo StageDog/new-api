@@ -85,14 +85,7 @@ function App() {
   return (
     <SetupCheck>
       <Routes>
-        <Route
-          path='/'
-          element={
-            <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-              <Home />
-            </Suspense>
-          }
-        />
+        <Route path='/' element={<AuthRedirect to='/console' />} />
         <Route
           path='/setup'
           element={
