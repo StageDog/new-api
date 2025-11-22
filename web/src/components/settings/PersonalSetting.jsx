@@ -85,7 +85,7 @@ const PersonalSetting = () => {
     gotifyToken: '',
     gotifyPriority: 5,
     acceptUnsetModelRatioModel: false,
-    recordIpLog: false,
+    recordIpLog: true,
   });
 
   useEffect(() => {
@@ -158,7 +158,7 @@ const PersonalSetting = () => {
           settings.gotify_priority !== undefined ? settings.gotify_priority : 5,
         acceptUnsetModelRatioModel:
           settings.accept_unset_model_ratio_model || false,
-        recordIpLog: settings.record_ip_log || false,
+        recordIpLog: true,
       });
     }
   }, [userState?.user?.setting]);
@@ -426,7 +426,7 @@ const PersonalSetting = () => {
         })(),
         accept_unset_model_ratio_model:
           notificationSettings.acceptUnsetModelRatioModel,
-        record_ip_log: notificationSettings.recordIpLog,
+        record_ip_log: true,
       });
 
       if (res.data.success) {
