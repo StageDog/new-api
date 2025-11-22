@@ -21,7 +21,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { API, isAdmin, showError, timestamp2string } from '../../helpers';
-import { getDefaultTime, getInitialTimestamp } from '../../helpers/dashboard';
+import { getDefaultTime } from '../../helpers/dashboard';
 import { TIME_OPTIONS } from '../../constants/dashboard.constants';
 import { useIsMobile } from '../common/useIsMobile';
 import { useMinimumLoadingTime } from '../common/useMinimumLoadingTime';
@@ -43,7 +43,7 @@ export const useDashboardData = (userState, userDispatch, statusState) => {
     username: '',
     token_name: '',
     model_name: '',
-    start_timestamp: getInitialTimestamp(),
+    start_timestamp: timestamp2string(new Date().setHours(0, 0, 0, 0) / 1000),
     end_timestamp: timestamp2string(new Date().getTime() / 1000 + 3600),
     channel: '',
     data_export_default_time: '',
@@ -55,14 +55,17 @@ export const useDashboardData = (userState, userDispatch, statusState) => {
   // ========== 数据状态 ==========
   const [quotaData, setQuotaData] = useState([]);
   const [consumeQuota, setConsumeQuota] = useState(0);
-  const [consumeTokens, setConsumeTokens] = useState(0);
+  const [inputTokens, setInputTokens] = useState(0);
+  const [outputTokens, setOutputTokens] = useState(0);
   const [times, setTimes] = useState(0);
   const [pieData, setPieData] = useState([{ type: 'null', value: '0' }]);
   const [lineData, setLineData] = useState([]);
+  const [userConsumptionRankBarData, setUserConsumptionRankBarData] =
+    useState([]);
   const [modelColors, setModelColors] = useState({});
 
   // ========== 图表状态 ==========
-  const [activeChartTab, setActiveChartTab] = useState('1');
+  const [activeChartTab, setActiveChartTab] = useState('3');
 
   // ========== 趋势数据 ==========
   const [trendData, setTrendData] = useState({
@@ -71,7 +74,8 @@ export const useDashboardData = (userState, userDispatch, statusState) => {
     requestCount: [],
     times: [],
     consumeQuota: [],
-    tokens: [],
+    inputTokens: [],
+    outputTokens: [],
     rpm: [],
     tpm: [],
   });
@@ -112,12 +116,12 @@ export const useDashboardData = (userState, userDispatch, statusState) => {
     const avgRPM = isNaN(times / timeDiff)
       ? '0'
       : (times / timeDiff).toFixed(3);
-    const avgTPM = isNaN(consumeTokens / timeDiff)
+    const avgTPM = isNaN((inputTokens + outputTokens) / timeDiff)
       ? '0'
-      : (consumeTokens / timeDiff).toFixed(3);
+      : ((inputTokens + outputTokens) / timeDiff).toFixed(3);
 
     return { avgRPM, avgTPM, timeDiff };
-  }, [times, consumeTokens, inputs.start_timestamp, inputs.end_timestamp]);
+  }, [times, inputTokens, outputTokens, inputs.start_timestamp, inputs.end_timestamp]);
 
   const getGreeting = useMemo(() => {
     const hours = new Date().getHours();
@@ -269,14 +273,18 @@ export const useDashboardData = (userState, userDispatch, statusState) => {
     quotaData,
     consumeQuota,
     setConsumeQuota,
-    consumeTokens,
-    setConsumeTokens,
+    inputTokens,
+    setInputTokens,
+    outputTokens,
+    setOutputTokens,
     times,
     setTimes,
     pieData,
     setPieData,
     lineData,
     setLineData,
+    userConsumptionRankBarData,
+    setUserConsumptionRankBarData,
     modelColors,
     setModelColors,
 

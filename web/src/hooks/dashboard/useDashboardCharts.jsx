@@ -35,15 +35,18 @@ import {
   updateMapValue,
   initializeMaps,
 } from '../../helpers/dashboard';
+import _ from 'lodash';
 
 export const useDashboardCharts = (
   dataExportDefaultTime,
   setTrendData,
   setConsumeQuota,
   setTimes,
-  setConsumeTokens,
+  setInputTokens,
+  setOutputTokens,
   setPieData,
   setLineData,
+  setUserConsumptionRankBarData,
   setModelColors,
   t,
 ) => {
@@ -259,6 +262,48 @@ export const useDashboardCharts = (
     },
   });
 
+  const [user_consumption_rank_bar, setUserConsumptionRankBar] = useState({
+    type: 'bar',
+    direction: 'horizontal',
+    data: [
+      {
+        id: 'userConsumptionRankBarData',
+        values: [],
+      },
+    ],
+    xField: 'Usage',
+    yField: 'User',
+    seriesField: 'User',
+    legends: {
+      visible: true,
+      selectMode: 'single',
+    },
+    title: {
+      visible: false,
+    },
+    bar: {
+      state: {
+        hover: {
+          stroke: '#000',
+          lineWidth: 1,
+        },
+      },
+    },
+    tooltip: {
+      mark: {
+        content: [
+          {
+            key: (datum) => datum['User'],
+            value: (datum) => renderNumber(datum['Usage']),
+          },
+        ],
+      },
+    },
+    color: {
+      specified: modelColorMap,
+    },
+  });
+
   // ========== 数据处理函数 ==========
   const generateModelColors = useCallback((uniqueModels, modelColors) => {
     const newModelColors = {};
@@ -283,18 +328,22 @@ export const useDashboardCharts = (
       const {
         totalQuota,
         totalTimes,
-        totalTokens,
+        totalInputTokens,
+        totalOutputTokens,
         uniqueModels,
         timePoints,
         timeQuotaMap,
-        timeTokensMap,
+        timeInputTokensMap,
+        timeOutputTokensMap,
         timeCountMap,
+        userConsumptionMap
       } = processedData;
 
       const trendDataResult = calculateTrendData(
         timePoints,
         timeQuotaMap,
-        timeTokensMap,
+        timeInputTokensMap,
+        timeOutputTokensMap,
         timeCountMap,
         dataExportDefaultTime,
       );
@@ -366,6 +415,16 @@ export const useDashboardCharts = (
         'barData',
       );
 
+      const userConsumptionRankBarData = _(userConsumptionMap)
+        .toPairs()
+        .orderBy([1], 'desc')
+        .take(10)
+        .map(([user, usage]) => ({
+          User: user,
+          Usage: usage,
+        }))
+        .value();
+
       // ===== 模型调用次数折线图 =====
       let modelLineData = [];
       chartTimePoints.forEach((time) => {
@@ -406,11 +465,21 @@ export const useDashboardCharts = (
         'rankData',
       );
 
+      updateChartSpec(
+        setUserConsumptionRankBar,
+        userConsumptionRankBarData,
+        '',
+        newModelColors,
+        'userConsumptionRankBarData',
+      );
+
       setPieData(newPieData);
       setLineData(newLineData);
       setConsumeQuota(totalQuota);
       setTimes(totalTimes);
-      setConsumeTokens(totalTokens);
+      setInputTokens(totalInputTokens);
+      setOutputTokens(totalOutputTokens);
+      setUserConsumptionRankBarData(userConsumptionRankBarData);
     },
     [
       dataExportDefaultTime,
@@ -421,7 +490,9 @@ export const useDashboardCharts = (
       setLineData,
       setConsumeQuota,
       setTimes,
-      setConsumeTokens,
+      setInputTokens,
+      setOutputTokens,
+      setUserConsumptionRankBarData,
       t,
     ],
   );
@@ -439,6 +510,7 @@ export const useDashboardCharts = (
     spec_line,
     spec_model_line,
     spec_rank_bar,
+    user_consumption_rank_bar,
 
     // 函数
     updateChartData,
