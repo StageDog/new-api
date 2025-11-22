@@ -161,7 +161,7 @@ export const useLogsData = () => {
       [COLUMN_KEYS.COMPLETION]: true,
       [COLUMN_KEYS.COST]: true,
       [COLUMN_KEYS.RETRY]: isAdminUser,
-      [COLUMN_KEYS.IP]: true,
+      [COLUMN_KEYS.IP]: isAdminUser,
       [COLUMN_KEYS.DETAILS]: true,
     };
   };
