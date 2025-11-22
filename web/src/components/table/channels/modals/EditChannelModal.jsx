@@ -1296,8 +1296,7 @@ const EditChannelModal = (props) => {
       }
     }
     localInputs.model_mapping = _.isEmpty(model_mapping) ? '' : JSON.stringify(model_mapping);
-    localInputs.models = _(localInputs.models)
-      .concat(_.keys(model_mapping))
+    localInputs.models = _(_.isEmpty(model_mapping) ? localInputs.models : _.keys(model_mapping))
       .sort()
       .sortedUniq()
       .value();
