@@ -129,7 +129,7 @@ func GetAllChannels(c *gin.Context) {
 
 		baseQuery.Count(&total)
 
-		order := "priority desc"
+		order := "name asc"
 		if idSort {
 			order = "id desc"
 		}
