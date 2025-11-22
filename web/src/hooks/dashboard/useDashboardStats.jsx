@@ -27,7 +27,7 @@ import {
   IconPulse,
   IconStopwatchStroked,
   IconTypograph,
-  IconSend,
+  IconLoopTextStroked,
 } from '@douyinfe/semi-icons';
 import { renderQuota } from '../../helpers';
 import { createSectionTitle } from '../../helpers/dashboard';
@@ -35,7 +35,8 @@ import { createSectionTitle } from '../../helpers/dashboard';
 export const useDashboardStats = (
   userState,
   consumeQuota,
-  consumeTokens,
+  inputTokens,
+  outputTokens,
   times,
   trendData,
   performanceMetrics,
@@ -45,7 +46,7 @@ export const useDashboardStats = (
   const groupedStatsData = useMemo(
     () => [
       {
-        title: createSectionTitle(Wallet, t('账户数据')),
+        title: createSectionTitle(Wallet, t('个人现状')),
         color: 'bg-blue-50',
         items: [
           {
@@ -67,19 +68,19 @@ export const useDashboardStats = (
         ],
       },
       {
-        title: createSectionTitle(Activity, t('使用统计')),
+        title: createSectionTitle(Activity, t('统计情况')),
         color: 'bg-green-50',
         items: [
           {
-            title: t('请求次数'),
-            value: userState.user?.request_count,
-            icon: <IconSend />,
-            avatarColor: 'green',
-            trendData: [],
-            trendColor: '#10b981',
+            title: t('累计消费'),
+            value: renderQuota(consumeQuota),
+            icon: <IconCoinMoneyStroked />,
+            avatarColor: 'yellow',
+            trendData: trendData.consumeQuota,
+            trendColor: '#f59e0b',
           },
           {
-            title: t('统计次数'),
+            title: t('累计次数'),
             value: times,
             icon: <IconPulse />,
             avatarColor: 'cyan',
@@ -93,19 +94,19 @@ export const useDashboardStats = (
         color: 'bg-yellow-50',
         items: [
           {
-            title: t('统计额度'),
-            value: renderQuota(consumeQuota),
-            icon: <IconCoinMoneyStroked />,
+            title: t('输入token数'),
+            value: isNaN(inputTokens) ? 0 : inputTokens.toLocaleString(),
+            icon: <IconTextStroked />,
             avatarColor: 'yellow',
-            trendData: trendData.consumeQuota,
-            trendColor: '#f59e0b',
+            trendData: trendData.inputTokens,
+            trendColor: '#10b981',
           },
           {
-            title: t('统计Tokens'),
-            value: isNaN(consumeTokens) ? 0 : consumeTokens.toLocaleString(),
-            icon: <IconTextStroked />,
+            title: t('输出token数'),
+            value: isNaN(outputTokens) ? 0 : outputTokens.toLocaleString(),
+            icon: <IconLoopTextStroked />,
             avatarColor: 'pink',
-            trendData: trendData.tokens,
+            trendData: trendData.outputTokens,
             trendColor: '#ec4899',
           },
         ],
@@ -139,7 +140,8 @@ export const useDashboardStats = (
       userState?.user?.request_count,
       times,
       consumeQuota,
-      consumeTokens,
+      inputTokens,
+      outputTokens,
       trendData,
       performanceMetrics,
       navigate,
