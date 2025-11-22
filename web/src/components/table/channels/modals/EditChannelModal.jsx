@@ -76,6 +76,7 @@ import {
   IconChevronUp,
   IconChevronDown,
 } from '@douyinfe/semi-icons';
+import _ from 'lodash';
 
 const { Text, Title } = Typography;
 
@@ -1280,6 +1281,25 @@ const EditChannelModal = (props) => {
       showInfo(t('请填写渠道名称和渠道密钥！'));
       return;
     }
+    let model_mapping = {};
+    if (localInputs.model_mapping && localInputs.model_mapping !== '') {
+      try {
+        model_mapping = _(JSON.parse(localInputs.model_mapping))
+          .toPairs()
+          .orderBy([0], ['asc'])
+          .fromPairs()
+          .value();
+      } catch (error) {
+        showInfo(t('模型映射必须是合法的 JSON 格式！'));
+        return;
+      }
+    }
+    localInputs.model_mapping = _.isEmpty(model_mapping) ? '' : JSON.stringify(model_mapping);
+    localInputs.models = _(localInputs.models)
+      .concat(_.keys(model_mapping))
+      .sort()
+      .sortedUniq()
+      .value();
     if (!Array.isArray(localInputs.models) || localInputs.models.length === 0) {
       showInfo(t('请至少选择一个模型！'));
       return;
@@ -1291,6 +1311,7 @@ const EditChannelModal = (props) => {
       showInfo(t('请输入API地址！'));
       return;
     }
+
     const hasModelMapping =
       typeof localInputs.model_mapping === 'string' &&
       localInputs.model_mapping.trim() !== '';
@@ -2736,7 +2757,6 @@ const EditChannelModal = (props) => {
                       field='models'
                       label={t('模型')}
                       placeholder={t('请选择该渠道所支持的模型')}
-                      rules={[{ required: true, message: t('请选择模型') }]}
                       multiple
                       filter={selectFilter}
                       autoClearSearchValue={false}
