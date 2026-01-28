@@ -328,7 +328,7 @@ export const aggregateDataByTimeAndModel = (data, dataExportDefaultTime) => {
 
   data.forEach((item) => {
     const timeKey = timestamp2string1(item.created_at, dataExportDefaultTime, showYear);
-    const modelKey = item.upstream_model_name !== '' ? item.upstream_model_name : item.model_name;
+    const modelKey = item.upstream_model_name !== '' ? item.upstream_model_name.replace(/^[^\/]+\//, '').replace(/^\[[^\]]+\]/, '').replace(/-202(?:5|6)\d+$/) : item.model_name;
     const key = `${timeKey}-${modelKey}`;
 
     if (!aggregatedData.has(key)) {
