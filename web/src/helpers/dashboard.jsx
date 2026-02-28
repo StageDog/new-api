@@ -230,6 +230,26 @@ export const renderMonitorList = (
 };
 
 // ========== 数据处理函数 ==========
+export const trimModel = (model_name) => {
+  model_name = model_name
+    .replace(/^[^\/]+\//, '')
+    .replace(/^\[[^\]]+\]/, '')
+    .replace(/-(?:202\d+|thinking|low|high|preview|r)$/, '')
+    .replace(/:.+$/, '');
+  
+  const sonnet = model_name.match(/claude-(\d+)(?:\.|-)(\d+)-sonnet/);
+  if (sonnet) {
+    return `claude-sonnet-${sonnet[1]}-${sonnet[2]}`;
+  }
+
+  const glm = model_name.match(/glm(\d+)/);
+  if (glm) {
+    return `glm-${glm[1]}`;
+  }
+
+  return model_name;
+};
+
 export const processRawData = (
   data,
   dataExportDefaultTime,
@@ -254,8 +274,9 @@ export const processRawData = (
   const showYear = isDataCrossYear(data.map((item) => item.created_at));
 
   data.forEach((item) => {
-    result.uniqueModels.add(item.upstream_model_name !== '' ? item.upstream_model_name : item.model_name);
-    result.totalInputTokens += item.prompt_tokens;
+    result.uniqueModels.add(trimModel(item.upstream_model_name !== '' ? item.upstream_model_name : item.model_name));
+    const input_tokens = item.prompt_tokens - (item?.cache_tokens ?? 0)
+    result.totalInputTokens += input_tokens;
     result.totalOutputTokens += item.completion_tokens;
     result.totalQuota += item.quota;
     result.totalTimes += item.count;
@@ -277,10 +298,10 @@ export const processRawData = (
       result.timeCountMap,
     );
     updateMapValue(result.timeQuotaMap, timeKey, item.quota);
-    updateMapValue(result.timeInputTokensMap, timeKey, item.prompt_tokens);
+    updateMapValue(result.timeInputTokensMap, timeKey, input_tokens);
     updateMapValue(result.timeOutputTokensMap, timeKey, item.completion_tokens);
     updateMapValue(result.timeCountMap, timeKey, item.count);
-    updateMapValue(result.userConsumptionMap, item.username, item.prompt_tokens + item.completion_tokens);
+    updateMapValue(result.userConsumptionMap, item.username, input_tokens + item.completion_tokens);
   });
 
   result.timePoints.sort();
@@ -337,25 +358,6 @@ export const aggregateDataByTimeAndModel = (data, dataExportDefaultTime) => {
       dataExportDefaultTime,
       showYear,
     );
-    const trimModel = (model_name) => {
-      model_name = model_name
-        .replace(/^[^\/]+\//, '')
-        .replace(/^\[[^\]]+\]/, '')
-        .replace(/-(?:202\d+|thinking|low|high|preview|r)$/, '')
-        .replace(/:.+$/, '');
-      
-      const sonnet = model_name.match(/claude-(\d+)(?:\.|-)(\d+)-sonnet/);
-      if (sonnet) {
-        return `claude-sonnet-${sonnet[1]}-${sonnet[2]}`;
-      }
-
-      const glm = model_name.match(/glm(\d+)/);
-      if (glm) {
-        return `glm-${glm[1]}`;
-      }
-
-      return model_name;
-    };
     const modelKey = trimModel(item.upstream_model_name !== '' ? item.upstream_model_name : item.model_name);
     const key = `${timeKey}-${modelKey}`;
 

@@ -144,10 +144,11 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 	username := c.GetString("username")
 	requestId := c.GetString(common.RequestIdKey)
 	otherStr := common.MapToJsonStr(params.Other)
+	createdAt := common.GetTimestamp()
 	log := &Log{
 		UserId:           userId,
 		Username:         username,
-		CreatedAt:        common.GetTimestamp(),
+		CreatedAt:        createdAt,
 		Type:             LogTypeConsume,
 		Content:          params.Content,
 		PromptTokens:     params.PromptTokens,
@@ -176,7 +177,12 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 					upstreamModelName = s
 				}
 			}
-			LogQuotaData(userId, username, params.ModelName, upstreamModelName, params.Quota, common.GetTimestamp(), params.PromptTokens, params.CompletionTokens)
+			cacheTokens := 0
+			if v, ok := params.Other["cache_tokens"]; ok {
+				// TODO: fix
+				cacheTokens = int(v.(int))
+			}
+			LogQuotaData(userId, username, params.ModelName, upstreamModelName, params.Quota, createdAt, params.PromptTokens, cacheTokens, params.CompletionTokens)
 		})
 	}
 }

@@ -18,6 +18,7 @@ type QuotaData struct {
 	UpstreamModelName string `json:"upstream_model_name" gorm:"index:idx_qdt_model_user_name,priority:3;size:64;default:''"`
 	CreatedAt         int64  `json:"created_at" gorm:"bigint;index:idx_qdt_created_at,priority:2"`
 	PromptTokens      int    `json:"prompt_tokens" gorm:"default:0"`
+	CacheTokens       int    `json:"cache_tokens" gorm:"default:0"`
 	CompletionTokens  int    `json:"completion_tokens" gorm:"default:0"`
 	Count             int    `json:"count" gorm:"default:0"`
 	Quota             int    `json:"quota" gorm:"default:0"`
@@ -36,13 +37,14 @@ func UpdateQuotaData() {
 var CacheQuotaData = make(map[string]*QuotaData)
 var CacheQuotaDataLock = sync.Mutex{}
 
-func logQuotaDataCache(userId int, username string, modelName string, upstreamModelName string, quota int, createdAt int64, promptTokens int, completionTokens int) {
+func logQuotaDataCache(userId int, username string, modelName string, upstreamModelName string, quota int, createdAt int64, promptTokens int, cacheTokens int, completionTokens int) {
 	key := fmt.Sprintf("%d-%s-%s-%s-%d", userId, username, modelName, upstreamModelName, createdAt)
 	quotaData, ok := CacheQuotaData[key]
 	if ok {
 		quotaData.Count += 1
 		quotaData.Quota += quota
 		quotaData.PromptTokens += promptTokens
+		quotaData.CacheTokens += cacheTokens
 		quotaData.CompletionTokens += completionTokens
 	} else {
 		quotaData = &QuotaData{
@@ -54,19 +56,20 @@ func logQuotaDataCache(userId int, username string, modelName string, upstreamMo
 			Count:             1,
 			Quota:             quota,
 			PromptTokens:      promptTokens,
+			CacheTokens:       cacheTokens,
 			CompletionTokens:  completionTokens,
 		}
 	}
 	CacheQuotaData[key] = quotaData
 }
 
-func LogQuotaData(userId int, username string, modelName string, upstreamModelName string, quota int, createdAt int64, promptTokens int, completionTokens int) {
+func LogQuotaData(userId int, username string, modelName string, upstreamModelName string, quota int, createdAt int64, promptTokens int, cacheTokens int, completionTokens int) {
 	// 只精确到小时
 	createdAt = createdAt - (createdAt % 3600)
 
 	CacheQuotaDataLock.Lock()
 	defer CacheQuotaDataLock.Unlock()
-	logQuotaDataCache(userId, username, modelName, upstreamModelName, quota, createdAt, promptTokens, completionTokens)
+	logQuotaDataCache(userId, username, modelName, upstreamModelName, quota, createdAt, promptTokens, cacheTokens, completionTokens)
 }
 
 func SaveQuotaDataCache() {
@@ -129,6 +132,6 @@ func GetAllQuotaDates(startTime int64, endTime int64, username string) (quotaDat
 	// 从quota_data表中查询数据
 	// only select model_name, sum(count) as count, sum(quota) as quota, model_name, created_at from quota_data group by model_name, created_at;
 	//err = DB.Table("quota_data").Where("created_at >= ? and created_at <= ?", startTime, endTime).Find(&quotaDatas).Error
-	err = DB.Table("quota_data").Select("username, model_name, upstream_model_name, sum(count) as count, sum(quota) as quota, sum(prompt_tokens) as prompt_tokens, sum(completion_tokens) as completion_tokens, created_at").Where("created_at >= ? and created_at <= ?", startTime, endTime).Group("username, model_name, upstream_model_name, created_at").Find(&quotaDatas).Error
+	err = DB.Table("quota_data").Select("username, model_name, upstream_model_name, sum(count) as count, sum(quota) as quota, sum(prompt_tokens) as prompt_tokens, sum(cache_tokens) as cache_tokens, sum(completion_tokens) as completion_tokens, created_at").Where("created_at >= ? and created_at <= ?", startTime, endTime).Group("username, model_name, upstream_model_name, created_at").Find(&quotaDatas).Error
 	return quotaDatas, err
 }
